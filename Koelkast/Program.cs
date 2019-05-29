@@ -13,26 +13,30 @@ namespace Koelkast
         {
             List<string> geweest = new List<string>();
             List<string> rtoestand = new List<string>();
-            int[] directions = new int[] { 1, 2, 3, 4 };
             string[] arr = Console.ReadLine().Split(' ');
             int b = Int32.Parse(arr[0]);
             int h = Int32.Parse(arr[1]);
             string m = arr[2];
-            string[,] map = new string[h, b];
+            string[,] map = new string[b, h];
             for (int i = 0; i < h; i++)
             {
                 string line = Console.ReadLine();
                 for (int j = 0; j < b; j++)
                 {
-                    map[i, j] = line[j].ToString();
+                    map[j, i] = line[j].ToString();
                 }
             }
 
             Point player = findIndex(map, "+");
             Point fridge = findIndex(map, "!");
+            uint toestand = (((uint)player.X) << 24) + (((uint)player.Y) << 16) + (((uint)fridge.X) << 8) + (((uint)fridge.Y));
             Point goal = findIndex(map, "?");
-            string t = move(player, directions, map, "", geweest, rtoestand);
-            Console.WriteLine(t);
+            uint gtoestand = (((uint)goal.X) << 8) + (((uint)goal.Y));
+            int aantalstappen = bfs(toestand, gtoestand, map);
+            //Console.WriteLine(((toestand >> 24)));
+            //Console.WriteLine((toestand >> 16) - ((toestand >> 24) << 8) + (uint)1);
+            //Console.WriteLine(map[((toestand >> 24)), (toestand >> 16) - ((toestand >> 24) << 8) + (uint)1]);
+            Console.WriteLine(aantalstappen);
             Console.ReadLine();
         }
 
@@ -51,131 +55,97 @@ namespace Koelkast
             return new Point(0, 0);
         }
 
-        public static string move(Point p, int[] d, string[,] map, string toestand, List<string> geweest, List<string> rtoestand)
+        public static int bfs(uint t, uint gt, string[,] map)
         {
-            for (int i = 0; i < 1; i++)
+            List<uint> q = new List<uint>();
+            Dictionary<uint, uint> geweest = new Dictionary<uint, uint>();
+            q.Add(t);
+            while (q.Count > 0)
             {
+                uint u = q.First();
+                foreach (uint x in succesors(u, map))
+                {
+                    if (!geweest.ContainsKey(x))
+                    {
+                        Console.WriteLine(x);
+                        q.Add(x);
+                        geweest.Add(x, u);
+                        if (map[x >> 24, (x >> 16) - ((x >> 24) << 8)] == "!")
+                        {
+                            
+                        }
+                    }
+                }
+                q.RemoveAt(0);
+            }
+            return -1;
+        }
 
+        public static List<uint> succesors(uint t, string[,] map)
+        {
+            int[] d = new int[] { 1, 2, 3, 4 };
+            List<uint> s = new List<uint>();
+            uint x = t >> 24;
+            uint y = (t >> 16) - ((t >> 24) << 8);
+            for (int i = 0; i < d.Length; i++)
+            {
                 switch (d[i])
                 {
                     case 1:
-                        if (geweest.Contains(p.X.ToString() + (p.Y + 1)))
+                        if (map[(x + (uint)1), y] == ".")
                         {
-
-                            break;
-                        }
-                        else
+                            s.Add(t + (1 << 24));
+                        }else if (map[(x + (uint)1), y] == "!")
                         {
-                            if (map[p.X, p.Y + 1] == ".")
-                            {
-                                Console.WriteLine(p.X.ToString() + (p.Y + 1));
-                                rtoestand.Add(toestand + "1");
-                                break;
-                            }
-                            else if (map[p.X, p.Y + 1] == "!")
-                            {
-                                Console.WriteLine(p.X.ToString() + (p.Y + 1));
-                                toestand = toestand + "1";
-                                return toestand;
-                            }
-                            else
-                            {
-                                break;
-                            }
+                            fsuccesors(map, t,s,1,x,y);
                         }
-                        //case 2:
-                        //    if (geweest.Contains(p.X.ToString() + (p.Y - 1)))
-                        //    {
-                        //        break;
-                        //    }
-                        //    else { if(map[p.X, p.Y - 1] == ".")
-                        //    {
-                        //            toestand = toestand + "2";
-                        //            geweest.Add(p.X.ToString() + p.Y);
-
-
-                        //        }
-                        //    else if (map[p.X, p.Y - 1] == "!")
-                        //        {
-                        //            toestand = toestand + "2";
-                        //            rtoestand.Add(toestand);
-                        //            return toestand;
-                        //        }
-                        //        else
-                        //        {
-                        //            break;
-                        //        }
-                        //        break;
-                        //    }
-                        //case 3:
-                        //    if (geweest.Contains((p.X + 1).ToString() + p.Y))
-                        //    {
-                        //        break;
-                        //    }
-                        //    else
-                        //    {
-                        //        if (map[p.X + 1, p.Y] == ".")
-                        //        {
-                        //            toestand = toestand + "3";
-                        //            p.X += 1;
-                        //            geweest.Add(p.X.ToString() + p.Y);
-
-
-                        //        }
-                        //        else if (map[p.X + 1, p.Y] == "!")
-                        //        {
-                        //            toestand = toestand + "3";
-                        //            rtoestand.Add(toestand);
-                        //            return toestand;
-                        //        }
-                        //        else
-                        //        {
-                        //            return " ";
-                        //        }
-                        //        break;
-                        //    }
-                        //case 4:
-                        //    if (geweest.Contains((p.X - 1).ToString() + p.Y))
-                        //    {
-                        //        break;
-                        //    }
-                        //    else
-                        //    {
-                        //        if (map[p.X - 1, p.Y] == ".")
-                        //        {
-                        //            toestand = toestand + "4";
-                        //            p.Y -= 1;
-                        //            geweest.Add(p.X.ToString() + p.Y);
-
-
-                        //        }
-                        //        else if (map[p.X - 1, p.Y] == "!")
-                        //        {
-                        //            Console.WriteLine((p.X-1).ToString() + (p.Y));
-                        //            toestand = toestand + "4";
-                        //            rtoestand.Add(toestand);
-                        //            return toestand;
-                        //        }
-                        //        else
-                        //        {
-                        //            return " ";
-                        //        }
-                        //        break;
-                        //    }
+                        break;
+                    case 2:
+                        if (map[(x - (uint)1), y] == "." || map[(x - (uint)1), y] == "!")
+                        {
+                            s.Add(t - (1 << 24));
+                        }
+                        break;
+                    case 3:
+                        if (map[x, y + (uint)1] == "." || map[x, y + (uint)1] == "!")
+                        {
+                            s.Add(t + (1 << 16));
+                        }
+                        break;
+                    case 4:
+                        if (map[x, y - (uint)1] == "."|| map[x, y - (uint)1] == "!")
+                        {
+                            s.Add(t - (1 << 16));
+                        }
+                        break;
                 }
             }
-            geweest.Add(p.X.ToString() + p.Y);
-            for (int k = 0; k < 1; k++)
-            {
-                Console.WriteLine(p.Y);
-                p.Y += rtoestand[k][0];
-                Console.WriteLine(p.Y);
-                toestand = move(p, d, map, rtoestand[0], geweest, rtoestand);
-            }
-            Console.WriteLine(toestand);
-            return toestand;
-
+            return s;
         }
+
+        public static List<uint> fsuccesors(string[,] map, uint t, List<uint> s, int d, uint x, uint y)
+        {
+            switch (d)
+            {
+                case 1:
+                    if(map[(x + (uint)2), y] == ".")
+                    {
+                        s.Add(t + (1 << 8) + (1<<24));
+                    }
+                    else if (map[(x + (uint)1), y + (uint)1] == ".")
+                    {
+                        s.Add(t + 1 + (1 << 24));
+                    }else if (map[(x + (uint)1), y - (uint)1] == ".")
+                    {
+
+                    }
+                    break;
+            }
+            
+
+            return s;
+        }
+
     }
 }
 
